@@ -1,59 +1,72 @@
-FROM python:3.8-slim
+FROM python:3.14-alpine AS builder
 
-ARG APP_WORKDIR=/tv
-
-ENV APP_WORKDIR=$APP_WORKDIR
-
-COPY . $APP_WORKDIR
+ARG APP_WORKDIR=/iptv-api
+ARG NGINX_VER=1.27.4
+ARG RTMP_VER=1.2.2
 
 WORKDIR $APP_WORKDIR
 
-RUN pip install -i https://mirrors.aliyun.com/pypi/simple pipenv
+COPY Pipfile* ./
 
-RUN pipenv install
+RUN apk add --no-cache gcc musl-dev python3-dev libffi-dev zlib-dev jpeg-dev wget make pcre-dev openssl-dev \
+  && pip install pipenv \
+  && PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy
 
-RUN echo "deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware\n \
-  deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm main contrib non-free non-free-firmware\n \
-  deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware\n \
-  deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware\n \
-  deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-updates main contrib non-free non-free-firmware\n \
-  deb https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware\n \
-  deb-src https://mirrors.tuna.tsinghua.edu.cn/debian/ bookworm-backports main contrib non-free non-free-firmware\n \
-  deb https://mirrors.tuna.tsinghua.edu.cn/debian-security/ bookworm-security main contrib non-free non-free-firmware\n \
-  deb-src https://mirrors.tuna.tsinghua.edu.cn/debian-security/ bookworm-security main contrib non-free non-free-firmware\n" \
-  > /etc/apt/sources.list
+RUN wget https://nginx.org/download/nginx-${NGINX_VER}.tar.gz && \
+    tar xzf nginx-${NGINX_VER}.tar.gz
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  cron \
-  xz-utils
+RUN wget https://github.com/arut/nginx-rtmp-module/archive/v${RTMP_VER}.tar.gz && \
+    tar xzf v${RTMP_VER}.tar.gz
 
-COPY tmp/ffmpeg-release-i686-static.tar.xz /tmp/
+WORKDIR $APP_WORKDIR/nginx-${NGINX_VER}
+RUN ./configure \
+    --add-module=$APP_WORKDIR/nginx-rtmp-module-${RTMP_VER} \
+    --conf-path=/etc/nginx/nginx.conf \
+    --error-log-path=/var/log/nginx/error.log \
+    --http-log-path=/var/log/nginx/access.log \
+    --with-cc-opt='-DNGX_HAVE_PWRITE=0 -DNGX_HAVE_PWRITEV=0' \
+    --with-http_ssl_module && \
+    make && \
+    make install
 
-RUN tar -xf /tmp/ffmpeg-release-i686-static.tar.xz -C /tmp/ \
-  && cp /tmp/ffmpeg-*/ffmpeg /usr/local/bin/ \
-  && cp /tmp/ffmpeg-*/ffprobe /usr/local/bin/ \
-  && rm -rf /tmp/ffmpeg-*
+FROM python:3.14-alpine
 
-ARG INSTALL_CHROMIUM=false
+ARG APP_WORKDIR=/iptv-api
 
-RUN if [ "$INSTALL_CHROMIUM" = "true" ]; then \
-  apt-get install -y --no-install-recommends \
-  chromium \
-  chromium-driver; \
-  fi
+ENV APP_WORKDIR=$APP_WORKDIR
+ENV APP_PORT=5180
+ENV NGINX_HTTP_PORT=8080
+ENV NGINX_RTMP_PORT=1935
+ENV PUBLIC_PORT=80
+ENV PATH="$APP_WORKDIR/.venv/bin:/usr/local/nginx/sbin:$PATH"
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=utf-8
 
-RUN  apt-get clean && rm -rf /var/lib/apt/lists/*
+WORKDIR $APP_WORKDIR
 
-RUN (crontab -l ; \
-  echo "0 22 * * * cd $APP_WORKDIR && /usr/local/bin/pipenv run python main.py scheduled_task"; \
-  echo "0 10 * * * cd $APP_WORKDIR && /usr/local/bin/pipenv run python main.py scheduled_task") | crontab -
+COPY . $APP_WORKDIR
 
-EXPOSE 8000
+COPY --from=builder $APP_WORKDIR/.venv $APP_WORKDIR/.venv
+COPY --from=builder /usr/local/nginx /usr/local/nginx
 
-COPY entrypoint.sh /tv_entrypoint.sh
+RUN mkdir -p /var/log/nginx && \
+  ln -sf /dev/stdout /var/log/nginx/access.log && \
+  ln -sf /dev/stderr /var/log/nginx/error.log
 
-COPY config /tv_config
+RUN apk add --no-cache ffmpeg pcre
 
-RUN chmod +x /tv_entrypoint.sh
+EXPOSE $NGINX_HTTP_PORT
 
-ENTRYPOINT /tv_entrypoint.sh
+COPY entrypoint.sh /iptv-api-entrypoint.sh
+
+COPY config /iptv-api-config
+
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+
+RUN mkdir -p /usr/local/nginx/html
+
+COPY stat.xsl /usr/local/nginx/html/stat.xsl
+
+RUN chmod +x /iptv-api-entrypoint.sh
+
+ENTRYPOINT ["/iptv-api-entrypoint.sh"]

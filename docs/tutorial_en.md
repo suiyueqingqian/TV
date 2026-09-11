@@ -1,225 +1,623 @@
 # Tutorial
 
-[中文](./tutorial.md) | English
+<div align="center">
+  <a href="../README_en.md">Project home</a> ·
+  <a href="./README.md">Documentation</a> ·
+  <a href="./config_en.md">Configuration</a> ·
+  <a href="./tutorial.md">中文</a> | English
+</div>
 
-## Step 1: Fork this Repository
+> [!TIP]
+> The project supports four ways to run: GitHub Actions, command line, GUI, and Docker. Choose the one that best fits
+> your environment.
 
-Copy the source code of this repository to your personal account repository
+<details open>
+<summary><strong>Contents</strong></summary>
 
-### 1. Click Fork on the homepage:
+- [Workflow deployment](#workflow-deployment)
+- [Command Line](#command-line)
+- [GUI Software](#gui-software)
+- [Docker](#docker)
+  - [Streaming Usage Tutorial](#streaming-usage-tutorial)
 
-![Fork Entrance](./images/fork-btn.png 'Fork Entrance')
+</details>
 
-### 2. Fork to create a personal repository:
+## Workflow deployment
 
-1. Name your personal repository, you can name it whatever you like (the final live source result link depends on this name), here we use default TV as an example.
-2. After confirming the information is correct, click to confirm and create.
+Use GitHub Actions to generate results manually and publish them to a fixed release in your fork.
 
-![Fork Details](./images/fork-detail.png 'Fork Details')
+> [!IMPORTANT]
+> Because GitHub resources are limited, the workflow can only be triggered manually. Generated results are not
+> committed to Git; they replace the assets in the `playlist-latest` prerelease. For frequent or scheduled runs, use
+> Docker, the command line, the GUI, or external object storage.
 
-## Step 2: Update the Source Code
+### Enter the IPTV-API Project
 
-Since this project will continue to iterate and improve, if you want to get the latest updates, you can do the following:
-
-### 1. Star
-
-Go to https://github.com/Guovin/TV, click on Star to bookmark this project (Your Star is my motivation to keep updating).
+Open https://github.com/Guovin/iptv-api and click `Star` to favorite this project (Your Star is my motivation for
+continuous updates).
 ![Star](./images/star.png 'Star')
 
-### 2. Watch
+### Fork
 
-Follow this project to be notified by email about the latest updates and release logs through releases.
-![Watch-activity](./images/watch-activity.png 'Watch All Activity')
+Copy the source code of this repository to your personal account repository.
+![Fork button](./images/fork-btn.png 'Fork button')
 
-### 3. Sync fork
+1. Name your personal repository as you like (the final live source result link depends on this name), here we use the
+   default `iptv-api` as an example.
+2. Confirm the information is correct and click to create.
 
-#### Normal update:
+![Fork details](./images/fork-detail.png 'Fork details')
 
-Go back to the homepage of your repository after forking. If there are updates to the project, click on "Sync fork" and then "Update branch" to confirm and update to the latest code.
-![Sync-fork](./images/sync-fork.png 'Sync fork')
+### Update Source Code
 
-#### No Update branch button, update conflict:
+Since this project will continue to iterate and optimize, if you want to get the latest updates, you can do the
+following:
 
-This is because some files conflict with the default files in the main repository. Click "Discard commits" to update to the latest code.
-![Conflict Resolution](./images/conflict.png 'Conflict Resolution')
+> [!WARNING]
+> If you only want to update your fork, do not click `Contribute` or `Open pull request` to create a PR.
+> Go to your own repository and use `Sync fork` → `Update branch`.
+> If a synchronization conflict occurs, back up `user_*.ini`, custom templates, and source files before using
+> `Discard commits` as described below.
+> Create a Pull Request only when you intentionally want to contribute code to the upstream repository.
 
-## Step 3: Modify the Template
+#### 1. Watch
 
-When you click to confirm and create in step one, you will be automatically redirected to your personal repository. At this point, your personal repository is created, and you can customize your personal live source channel menu!
+Follow this project, and subsequent update logs will be released as `releases`, and you will receive email
+notifications.
+![Watch All Activity](./images/watch-activity.png 'Watch All Activity')
 
-### 1. Click the demo.txt template file inside the config folder:
+#### 2. Sync fork
 
-![demo.txt Entrance](./images/demo-btn.png 'demo.txt Entrance')
+- Normal update:
 
-### 2. Create a personal template user_demo.txt inside the config folder:
+Go back to the homepage of your forked repository, if there are updates, click `Sync fork`, `Update branch` to confirm
+and update the latest code.
+![Sync fork](./images/sync-fork.png 'Sync fork')
 
-1. Create file
-2. Name the template file user_demo.txt
-3. The template file needs to be written in the format of (channel category, #genre#), (channel name, channel interface), note that it is an English comma.
-4. Click Commit changes... to save
+- No `Update branch` button, update conflict:
+
+This is because some files conflict with the default files of the main repository, click `Discard commits` to update the
+latest code.
+![Conflict resolution](./images/conflict.png 'Conflict resolution')
+
+> [!IMPORTANT]
+> To avoid conflicts when updating the code later, it is recommended to copy files in the `config` directory and rename
+> them by adding the `user_` prefix before modifying.
+
+### Modify Template
+
+When you click to confirm creation in step one, you will automatically jump to your personal repository after success.
+At this time, your personal repository has been created, and you can customize your live source channel menu!
+
+#### 1. Click the demo.txt template file in the config folder:
+
+![config folder entry](./images/config-folder.png 'config folder entry')
+
+![demo.txt entry](./images/demo-btn.png 'demo.txt entry')
+
+You can copy and refer to the format of the default template for subsequent operations.
+
+#### 2. Create a personal template user_demo.txt in the config folder:
+
+1. Click the `config` directory.
+2. Create a file.
+3. Name the template file `user_demo.txt`.
+4. The template file needs to be written in the format of (channel category, #genre#), (channel name, channel interface)
+   with a comma. If you want to whitelist the interface (no speed test, keep it at the top of the result), you can add
+   `$!` after the address, such as http://xxx$!. You can also add additional information, such as: http://xxx$!
+   whitelist.
+5. Click `Commit changes...` to save.
 
 ![Create user_demo.txt](./images/edit-user-demo.png 'Create user_demo.txt')
 
-## Step 4: Modify the Configuration
+### Modify Configuration
 
-Similar to editing the template, modify the running configuration
+Like editing templates, modify the runtime configuration.
 
-### 1. Click on the config.ini configuration file inside the config folder:
+#### 1. Click the config.ini configuration file in the config folder:
 
-![config.ini Entrance](./images/config-btn.png 'config.ini Entrance')
+![config.ini entry](./images/config-btn.png 'config.ini entry')
 
-### 2. Copy the default configuration file content:
+#### 2. Copy the default configuration file content:
 
-![Copy config.ini](./images/copy-config.png 'Copy default template')
+![copy config.ini](./images/copy-config.png 'Copy default configuration')
 
-### 3. Create a personal configuration file user_config.ini inside the config folder:
+#### 3. Create a personal configuration file user_config.ini in the config folder:
 
-1. Create file
-2. Name the configuration file user_config.ini
-3. Paste the default template
-4. Modify the template and result file configuration:
-   - source_file = config/user_demo.txt
-   - final_file = output/user_result.txt
-5. Click Commit changes... to save
+1. Create a file.
+2. Name the configuration file `user_config.ini`.
+3. Paste the default configuration. When creating `user_config.ini`, enter only the configuration items you want to
+   modify; you do not need to copy the entire `config.ini`.
+4. Modify the template and result file configuration and CDN proxy acceleration (recommended):
+    - source_file = config/user_demo.txt
+    - final_file = output/user_result.txt
+    - cdn_url = (go to the `Govin` public account and reply `cdn` to get it)
+5. Click `Commit changes...` to save.
 
 ![Create user_config.ini](./images/edit-user-config.png 'Create user_config.ini')
+![Edit final_file configuration](./images/edit-user-final-file.png 'Edit final_file configuration')
+![Edit source_file configuration](./images/edit-user-source-file.png 'Edit source_file configuration')
 
-Adjust the configuration as needed. Below is the default configuration explanation:
-[Config parameter](./docs/config_en.md)
+> [!IMPORTANT]
+> Keep `[Settings]` at the top of `user_config.ini`; otherwise, the custom configuration below does not take effect.
 
-## Step 5: Run Updates
+Adjust the configuration as needed, here is the default configuration description:
+[Configuration parameters](./config_en.md)
 
-## Method 1: Workflow update
+> [!NOTE]
+> 1. Some players, such as `PotPlayer`, cannot parse supplementary interface information. Set `open_url_info = False` (GUI: clear “Display interface information”) if this prevents playback.
+> 2. If your network supports IPv6, set `ipv6_support = True` (GUI: select “Force assume the current network supports IPv6”) to skip detection.
+> 3. For playback/speed-test request headers, configure the global `user_agent` or append `UA=value` to a URL in `config/subscribe.txt`. The UA is written to `.m3u` results without requiring `open_headers`.
+> 4. `location` and `isp` filter out non-matching interfaces by default. With `open_supply = True`, they are retained as lower-priority fallbacks.
+> 5. Use `sort_by` with comma-separated `speed`, `delay`, and `resolution` values. For example, `resolution,speed` sorts by resolution and then speed.
 
-#### Warning: Please use the following content with caution. If you have a large number of channels that need to be updated, please use local updates instead of automatic updates. Improper configuration may lead to your account or workflow being banned!
+#### Add data sources and more
 
-If your template and configuration modifications are correct, you can configure Actions to achieve automatic updates
+**Subscription sources (`config/subscribe.txt`)**
 
-### 1. Enter Actions:
+> [!IMPORTANT]
+> The project provides no default subscription addresses. Add your own; otherwise, update results may be empty.
 
-![Actions Entrance](./images/actions-btn.png 'Actions Entrance')
+Both `.txt` and `.m3u` URLs are supported as subscriptions, and the program reads channel interface entries from them
+sequentially.
+![Subscription sources](./images/subscribe.png 'Subscription sources')
 
-### 2. Enable Actions workflow:
+If a subscription source requires a specific `User-Agent` to be accessed, append `UA=value` after the subscription URL
+(wrap it in quotes when it contains spaces), for example:
+
+```text
+https://example.com/sub.m3u UA=okHttp/Mod-1.5.0.0
+https://example.com/sub2.m3u UA="Mozilla/5.0 xxx"
+```
+
+This `UA` is used for: fetching the subscription content, speed testing the interfaces under that subscription, and
+writing into the `.m3u` result (for players) — no need to enable `open_headers`. If you want to apply one UA to all
+interfaces (instead of adding it one by one), set the global `user_agent` in the configuration. Priority: interface's
+own UA (`#EXTVLCOPT` embedded in m3u) > subscription URL UA > global `user_agent` > built-in default UA. Note: request
+headers can only be written into the `.m3u` result; the `.txt` format cannot carry a UA.
+
+
+- Local sources（`config/local.txt`）
+
+  Channel interface data comes from local files. If there are multiple local source files, you can create a `local`
+  directory under `config` to store them; the program will read the channel interface data from them in order. Supports
+  `txt` and `m3u` files.
+
+
+- Logo source (`config/logo`)
+
+  Directory for channel logo images. The program will match corresponding logo images in this directory based on the
+  channel names in the template. If a remote library `logo_url` is used, the remote source will be preferred.
+
+
+- EPG Source (`config/epg.txt`)
+
+  The source of program guide information. The program will sequentially fetch the program guide data from the
+  subscription addresses in the file and aggregate the output.
+
+
+- Channel Aliases (`config/alias.txt`)
+
+  A list of aliases for channel names, used to map multiple names to a single name when fetching from the interface,
+  improving the fetch volume and accuracy. Format: TemplateChannelName,Alias1,Alias2,Alias3.
+
+  The program normalizes Traditional/Simplified Chinese, case, and common separators, then matches exact aliases and
+  constrained regex rules. You normally do not need to change a template merely because a source spells a channel
+  differently. Distinct channels are not merged, and ambiguous aliases are excluded. Prefix a custom regex with `re:`
+  and ensure it distinguishes related channels such as CCTV-5 and CCTV-5+.
+
+
+- Blacklist (`config/blacklist.txt`)
+
+  Interfaces that match the blacklist keywords will be filtered and not collected, such as low-quality interfaces with
+  ads.
+
+
+- Whitelist (`config/whitelist.txt`)
+
+  Interfaces or subscription sources in the whitelist will not participate in speed testing and will be prioritized at
+  the top of the results. Fill in the channel name to directly retain the record in the final result, such as: CCTV-1,
+  interface address, only filling in the interface address will apply to all channels, multiple records are entered on
+  separate lines.
+
+> [!TIP]
+> If a run produces no channel data, the logs distinguish between missing sources, empty subscription responses,
+> unmatched channels, and results removed by filters. In the GUI, use “Configure sources” on the dashboard. Docker users
+> should verify that `/iptv-api/config/subscribe.txt` inside the container is not empty.
+
+### Run Update
+
+After updating your template and configuration, use `Actions` to generate and publish results manually.
+
+#### 1. Enter Actions:
+
+![Actions entry](./images/actions-btn.png 'Actions entry')
+
+#### 2. Enable Actions workflow:
 
 ![Enable Actions workflow](./images/actions-enable.png 'Enable Actions workflow')
-Since the Actions workflow of the forked repository is disabled by default, you need to manually enable it by clicking the button in the red box to confirm.
-
+Since the Actions workflow of the forked repository is disabled by default, you need to manually confirm to enable it,
+click the button in the red box to confirm enabling.
 ![Actions workflow enabled successfully](./images/actions-home.png 'Actions workflow enabled successfully')
-After successful activation, you can see that there are no workflows running at the moment. Don't worry, let's start running your first update workflow below.
+After enabling Actions, start your first manual generation below.
 
-### 3. Run the update workflow:
+#### 3. Run the update workflow:
 
-#### (1) Enable update schedule:
+##### (1) Enable the manual generation workflow:
 
-1. Click on update schedule under the Workflows category.
-2. Since the workflow of the forked repository is disabled by default, click the Enable workflow button to confirm the activation.
+1. Click `Generate playlist manually` under the `Workflows` category.
+2. Since the workflow of the forked repository is disabled by default, click the `Enable workflow` button to confirm the
+   activation.
 
 ![Enable Workflows update](./images/workflows-btn.png 'Enable Workflows update')
 
-#### (2) Run the Workflow based on branches:
+##### (2) Run the Workflow based on branches:
 
-1. Click Run workflow.
-2. Here you can switch to the branch you want to run. Since the fork defaults to the master branch, if the template and configuration you modified are also in the master branch, just choose master here, and click Run workflow to confirm the run.
-
-![Run Workflow](./images/workflows-run.png 'Run Workflow')
 Now you can run the update workflow.
 
-#### (3) Workflow in progress:
+1. Click `Run workflow`.
+2. Here you can switch to the branch you want to run. Since the fork defaults to the `master` branch, if the template
+   and configuration you modified are also in the `master` branch, just choose `master` here, and click `Run workflow`
+   to confirm the run.
+
+![Run Workflow](./images/workflows-run.png 'Run Workflow')
+
+##### (3) Workflow in progress:
 
 Wait a moment, and you will see that your first update workflow is running!
-(Note: The running time depends on the number of channels and pages in your template and other configurations, and also largely depends on the current network conditions. Please be patient. The default template and configuration usually take about 25 minutes.)
+> [!NOTE]\
+> The running time depends on the number of channels and pages in your template and other configurations, and also
+> largely depends on the current network conditions. Please be patient. The default template and configuration usually
+> take about 15 minutes.
+
 ![Workflow in progress](./images/workflow-running.png 'Workflow in progress')
 
-#### (4) Cancel the running Workflow:
+##### (4) Cancel the running Workflow:
 
-If you feel that this update is not quite right and you need to modify the template or configuration before running again, you can click Cancel run to cancel this run.
+If you feel that this update is not quite right and you need to modify the template or configuration before running
+again, you can click `Cancel run` to cancel this run.
 ![Cancel running Workflow](./images/workflow-cancel.png 'Cancel running Workflow')
 
-#### (5) Workflow executed successfully:
+##### (5) Workflow executed successfully:
 
-If everything is normal, after a short wait, you will see that the workflow has been executed successfully (green check mark).
+If everything is normal, after a short wait, you will see that the workflow has been executed successfully (green check
+mark).
 ![Workflow executed successfully](./images/workflow-success.png 'Workflow executed successfully')
 
-At this point, you can visit the proxy file link to see if the latest results have been synchronized:
-https://mirror.ghproxy.com/raw.githubusercontent.com/your github username/repository name (corresponding to the TV created when forking)/master/user_result.txt
+The workflow summary contains the published links. You can also use these stable URLs directly:
+
+```text
+https://github.com/your-github-username/repository-name/releases/download/playlist-latest/result.m3u
+https://github.com/your-github-username/repository-name/releases/download/playlist-latest/result.txt
+https://github.com/your-github-username/repository-name/releases/download/playlist-latest/epg.gz
+```
+
+`result.txt` is always published. `result.m3u` and `epg.gz` exist only when their features are enabled and generation
+succeeds.
+
 ![Username and Repository Name](./images/rep-info.png 'Username and Repository Name')
 
-If you can access this link and it returns the updated interface content, then your live source interface link has been successfully created! Simply copy and paste this link into software like TVBox in the configuration field to use~
+If you can access this link and it returns the updated interface content, then your live source interface link has been
+successfully created! Simply copy and paste this link into software like `TVBox` in the configuration field to use~
 
-- Note: Except for the first execution of the workflow, which requires you to manually trigger it, subsequent executions (default: daily at 6:00 am and 18:00 pm Beijing time) will be automatically triggered. If you have modified the template or configuration files and want to execute the update immediately, you can manually trigger (2) Run workflow.
+> [!NOTE]\
+> 1. Run `Run workflow` again after changing templates or configuration; the published URLs remain unchanged.
+> 2. In Actions, `open_history` only attempts to restore short-lived cached state. A full run without history is used
+>    when that cache has expired.
+> 3. Changes made by `open_auto_disable_source` are not committed. Use another deployment method when those changes
+>    must persist.
 
-### 4.Modify Workflow Update Frequency(optional)
+### Migrate from the legacy workflow
 
-If you want to modify the update frequency (default: daily at 6:00 am and 18:00 pm Beijing time), you can modify the on:schedule:- cron field.
-![.github/workflows/main.yml](./images/schedule-cron.png '.github/workflows/main.yml')
-If you want to perform updates every 2 days, you can modify it like this:
+1. Back up `config/user_config.ini`, `user_*.txt`, custom templates, and source files from your fork.
+2. Disable any old workflow containing `schedule`; do not allow it to commit `output/` again.
+3. Use `Sync fork` → `Update branch`. Complete step 1 before using `Discard commits` if conflicts require it.
+4. Run `Generate playlist manually` and confirm that the `playlist-latest` prerelease was created.
+5. Replace the legacy raw URL in your player with the release URL above. The raw URL retains only its last result and
+   no longer updates.
 
-```bash
-- cron: '0 22 */2 * *'
-- cron: '0 10 */2 * *'
-```
+## Command Line
 
-#### 1. It is strongly discouraged to make modifications, as there is no difference in the content of the interface in a short period of time. Both too frequent updates and high-consumption running workflows may be judged as resource abuse, leading to the risk of the repository and account being banned.
-
-#### 2. Please pay attention to the runtime of your workflow. If you find that the execution time is too long, you need to appropriately reduce the number of channels in the template, modify the number of pages and interfaces in the configuration, in order to meet the compliant operation requirements.
-
-### Method 2: Command Line Update
-
-```python
 1. Install Python
-Please download and install Python from the official site. During installation, choose to add Python to the system's environment variables Path.
+   Please download and install Python from the official website, and select the option to add Python to the system
+   environment variable Path during installation.
 
-2. Run Update
-Open a CMD terminal in the project directory and run the following commands in sequence:
-pip3 install pipenv
-pipenv install
-pipenv run build
+2. Run the update
+   Open the terminal CMD in the project directory and run the following commands in sequence:
+
+Install dependencies:
+
+```shell
+pip install pipenv
 ```
 
-### Method 3: GUI Software Update
+```shell
+pipenv install --dev
+```
 
-1. Download the update tool software, open the software, click update to complete the update.
+Start the update:
 
-2. Alternatively, run the following command in the project directory to open the GUI software:
+```shell
+pipenv run dev
+```
 
-```python
+Start the service:
+
+```shell
+pipenv run service
+```
+
+## GUI Software
+
+The desktop GUI for Windows and macOS provides one-click updates, live progress, channel and result management, retesting, RTMP monitoring, source configuration, and task history. Docker deployments use web result pages and do not include this desktop interface.
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./images/desktop-ui-en-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="./images/desktop-ui-en.png">
+    <img src="./images/desktop-ui-en.png" alt="IPTV-API desktop GUI in English" width="100%"/>
+  </picture>
+  <details>
+    <summary>🌓 Toggle display mode</summary>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./images/desktop-ui-en.png">
+      <source media="(prefers-color-scheme: light)" srcset="./images/desktop-ui-en-dark.png">
+      <img src="./images/desktop-ui-en-dark.png" alt="IPTV-API desktop GUI in English alternate theme" width="100%"/>
+    </picture>
+  </details>
+</div>
+
+Install dependencies and start it from the project directory:
+
+```shell
+pipenv install --dev
 pipenv run ui
 ```
 
-![Update tool software](./images/ui.png 'Update tool software')
+Build the desktop application for the current platform:
 
-### Method 4: Docker Update
-
-- requests: Lightweight, low performance requirements, fast update speed, stability uncertain (recommend this version for subscription sources)
-- driver: Higher performance requirements, slower update speed, high stability and success rate. Set open_driver = False to switch to the request version (recommended for hotel sources, multicast sources, and online searches)
-
-```bash
-1. Pull the image:
-For requests version:
-docker pull guovern/tv-requests:latest
-
-For driver version:
-docker pull guovern/tv-driver:latest
-
-2. Run the container:
-docker run -d -p 8000:8000 guovern/tv-requests or driver
-
-Volume Mount Parameter (Optional):
-This allows synchronization of files between the host machine and the container. Modifying templates, configurations, and retrieving updated result files can be directly operated in the host machine's folder.
-
-config:
--v <path>/config:/tv-requests/config or tv-driver/config
-
-result:
--v <path>/output:/tv-requests/output or tv-driver/output
-
-3. Check the update results: Visit (domain:8000)
+```shell
+pipenv run ui_build
 ```
 
-#### Note: Link to the result file after updates of methods one to three: http://local ip:8000 or http://localhost:8000
+Settings are saved to `config/user_config.ini`; generated results, channel snapshots, task history, and logs are stored under `output/`. On Windows, a packaged desktop application creates both directories beside its executable by default, making them easy to back up, move, and access directly; automatic updates retain that user data. It falls back to the operating system's application-data directory only when the application directory is not writable. macOS continues to use the system application-data directory.
 
-### Update the File to the Repository(optional)
+To choose a location in the desktop app, select **Data directory** on the **Settings** page, then restart the app; **Restore default directory** clears that choice. Deployment scripts can pass `--data-dir` when launching the application or set the `IPTV_API_DATA_DIR` environment variable. The command-line option takes precedence:
 
-If you do not have your own domain address, after the interface update is completed, upload user_result.txt to your personal repository to use it.
-https://mirror.ghproxy.com/raw.githubusercontent.com/your github username/repository name (corresponding to the TV created when forking)/master/output/user_result.txt
-![Username and Repository Name](./images/rep-info.png 'Username and Repository Name')
+```shell
+IPTV-API-GUI.exe --data-dir "D:\\IPTV-API Data"
+```
+
+Install FFmpeg before enabling resolution probing. The Windows package can include nginx-rtmp. On macOS, install an nginx build with the RTMP module; the app generates and starts an isolated configuration automatically, while `IPTV_API_NGINX_PATH` and `IPTV_API_NGINX_RTMP_MODULE` can override discovery.
+
+> [!WARNING]
+> The legacy Tkinter interface is deprecated, retained temporarily for existing users, and scheduled for removal in a future release. It no longer receives maintenance, bug fixes, or new features. During the transition, start it with `pipenv run legacy_ui` or package it with `pipenv run legacy_ui_build`.
+
+## Docker
+
+### 1. Deployment with Compose
+
+Download the [docker-compose.yml](../docker-compose.yml) or create one by copying the content (internal parameters can
+be changed as needed), then run the following command in the path where the file is located:
+
+```bash
+docker compose up -d
+```
+
+### 2. Manual deployment with commands
+
+#### (1) Pull the image
+
+```bash
+docker pull guovern/iptv-api:latest
+```
+
+> [!CAUTION]
+> If the official image cannot be pulled, use the following proxy; it may provide an older image version.
+
+```bash
+docker pull docker.1ms.run/guovern/iptv-api:latest
+```
+
+#### (2) Run the container
+
+```bash
+docker run -d -p 80:8080 guovern/iptv-api
+```
+
+**Environment variables:**
+
+| Variable        | Description                                                                                         | Default   |
+|:----------------|:----------------------------------------------------------------------------------------------------|:----------|
+| PUBLIC_URL      | Recommended complete public URL, such as `http://192.168.1.10` or `https://iptv.example.com`         |           |
+| PUBLIC_DOMAIN   | Compatibility setting: public domain or IP used when `PUBLIC_URL` is empty                           | 127.0.0.1 |
+| PUBLIC_PORT     | Compatibility setting: mapped host port used when `PUBLIC_URL` is empty                              | 80        |
+| NGINX_HTTP_PORT | Advanced compatibility setting: internal container HTTP port; normally keep the default              | 8080      |
+
+> [!NOTE]
+> When IPv6 is enabled on the host/Docker, the container automatically listens on IPv6 addresses as well, with no extra configuration; in IPv4-only or IPv6-disabled environments it is skipped automatically.
+
+If you need to modify environment variables, add the following parameters after the above run command:
+
+```bash
+# Recommended: set the complete public URL
+-e PUBLIC_URL=https://iptv.example.com
+```
+
+With the repository Compose file, change only the host port through `PORT`, for example
+`PORT=8088 docker compose up -d`.
+An unset or empty `PUBLIC_URL` does not override `public_url` in the mounted configuration.
+
+In addition to the environment variables listed above, you can also override
+the [configuration items](../docs/config_en.md) in the configuration file via environment variables.
+
+**Mounts:** used to synchronize files between the host and the container. You can edit templates, configs, and access
+generated result files directly on the host. Append the following options to the run command above:
+
+```bash
+# Mount config directory
+-v /iptv-api/config:/iptv-api/config
+# Mount output directory
+-v /iptv-api/output:/iptv-api/output
+```
+
+#### 3. Update Results
+
+| Endpoint        | Description                                     |
+|:----------------|:------------------------------------------------|
+| /               | Default endpoint                                |
+| /m3u            | m3u format endpoint                             |
+| /txt            | txt format endpoint                             |
+| /ipv4           | ipv4 default endpoint                           |
+| /ipv6           | ipv6 default endpoint                           |
+| /ipv4/txt       | ipv4 txt endpoint                               |
+| /ipv6/txt       | ipv6 txt endpoint                               |
+| /ipv4/m3u       | ipv4 m3u endpoint                               |
+| /ipv6/m3u       | ipv6 m3u endpoint                               |
+| /content        | Endpoint content                                |
+| /log/result     | Log of valid results                            |
+| /log/speed-test | Log of all interfaces involved in speed testing |
+| /log/statistic  | Log of statistics results                       |
+| /log/unmatch    | Log of unmatched channels                       |
+
+**RTMP Streaming:**
+
+> [!WARNING]
+> Enabling streaming relays obtained interfaces such as subscription sources by default. Use this only for content you own, are authorized to redistribute, or need for closed/internal testing. In Mainland China, ensure content authorization, copyright, network-audiovisual, and broadcasting requirements are met; do not distribute, relay, or publicly expose unauthorized live streams or program sources.
+
+For server deployments, set the complete public address through `PUBLIC_URL`; legacy `PUBLIC_DOMAIN` and `PUBLIC_PORT` remain supported. To stream local videos, create `config/hls` and place files named after their channels in it; the program streams them to the corresponding channels.
+
+| Streaming Endpoint | Description                          |
+|:-------------------|:-------------------------------------|
+| /hls               | hls streaming endpoint               |
+| /hls/txt           | hls txt streaming endpoint           |
+| /hls/m3u           | hls m3u streaming endpoint           |
+| /hls/ipv4          | hls ipv4 default streaming endpoint  |
+| /hls/ipv6          | hls ipv6 default streaming endpoint  |
+| /hls/ipv4/txt      | hls ipv4 txt streaming endpoint      |
+| /hls/ipv4/m3u      | hls ipv4 m3u streaming endpoint      |
+| /hls/ipv6/txt      | hls ipv6 txt streaming endpoint      |
+| /hls/ipv6/m3u      | hls ipv6 m3u streaming endpoint      |
+| /stat              | Streaming status statistics endpoint |
+
+### Streaming Usage Tutorial
+
+Docker enables streaming with minimal configuration and placing local video files in the right folder. Below are two
+common streaming scenarios: subscription (online) sources and local video files.
+
+> [!WARNING]
+> Use this only for content you are authorized to relay or for closed/internal technical testing.
+
+#### 1. Preparations before start (Docker Compose example)
+
+- Use the repository's `docker-compose.yml` and confirm the following environment variables before starting:
+    - `PORT`: user-facing port mapped on the host.
+    - `PUBLIC_URL`: recommended complete public URL used to generate streaming and playlist links.
+    - `NGINX_HTTP_PORT`: advanced compatibility setting; normally keep the internal container port unchanged.
+- Make sure the `config` directory is mounted into the container (default `/iptv-api/config`) so you can edit templates,
+  add local videos, and place subscription files on the host.
+
+Example (excerpt from compose for reference):
+
+```yml
+services:
+  iptv-api:
+    image: guovern/iptv-api:latest
+    container_name: iptv-api
+    restart: unless-stopped
+
+    ports:
+      - "${PORT:-80}:8080" # PORT is user-facing; 8080 is the fixed internal container port
+
+    volumes:
+      - /iptv-api/config:/iptv-api/config # Change to host configuration folder path:container configuration folder path
+      - /iptv-api/output:/iptv-api/output
+
+    environment:
+      PUBLIC_URL: "${PUBLIC_URL:-http://192.168.1.95}" # Change to the complete public URL
+      PUBLIC_PORT: "${PORT:-80}" # Legacy compatibility value synchronized from PORT
+      NGINX_HTTP_PORT: "8080" # Advanced compatibility setting; normally do not change
+      CDN_URL: ""
+      # Used only for subscription sources and EPG data, not media speed tests
+      HTTP_PROXY: ""
+```
+
+#### 2. Subscription source streaming (online sources)
+
+- Add subscription URLs (txt or m3u) to `config/subscribe.txt`. On startup the program will read the subscriptions and
+  publish streams for the channels found.
+- Streaming endpoints to view streamed channels:
+    - `/hls/txt`, `/hls/m3u` (and their ipv4/ipv6 variants)
+
+#### 3. Local video streaming (server video files)
+
+- Create an `hls` folder under the mounted `config` directory (for example `/iptv-api/config/hls` on the host).
+- Put video files named exactly as the channel titles used in your template (e.g., `海洋.mp4`). The program will
+  automatically stream the corresponding file for that channel.
+
+Example layout:
+
+```
+iptv-api/
+├── config
+│   └── hls
+│       └── 海洋.mp4
+```
+
+- Add the channel in `config/demo.txt` (or your template) as usual; the program will map the local file to the channel
+  and stream it.
+
+Example template fragment:
+
+```markdown
+📺Main channels,#genre#
+CCTV-1
+
+📡Satellite,#genre#
+Guangdong Satellite
+
+🚀Local video,#genre#
+海洋
+```
+
+#### 4. Start and verify
+
+- Start the service (example using Compose):
+
+```bash
+docker compose up -d
+```
+
+- Verify:
+    - Check startup logs for successful initialization.
+    - View streaming results (txt): visit `/hls/txt` to see current stream addresses and descriptions.
+    - Use `/hls/m3u` to load the playlist into a player or `/hls/txt` for a plain list.
+
+#### 5. Monitoring and logs
+
+- Use the `/stat` endpoint to see current streaming counts, traffic, and basic statistics.
+- Container logs provide detailed stream start/stop messages:
+    - Logs show when a channel starts streaming and when idle channels stop.
+
+#### 6. Common tips and tuning
+
+- Public access & firewall: Make sure the HTTP port in `PUBLIC_URL` and the RTMP port are externally accessible through
+  firewalls and cloud security groups.
+- Domain and certificates: For HTTPS, set `PUBLIC_URL` directly to `https://your-domain` and manage TLS through an
+  external reverse proxy or your hosting setup.
+- Performance & concurrency: Local streaming consumes CPU and bandwidth. Adjust `rtmp_max_streams` to limit concurrent
+  streams and avoid overloading the server.
+- Idle stop: `rtmp_idle_timeout` controls how long a stream stays active with no viewers (in seconds); tune it per your
+  needs.
+
+#### 7. Useful RTMP-related configuration options
+
+```ini
+# RTMP channel idle stop timeout (seconds)
+rtmp_idle_timeout = 300
+# Maximum concurrent RTMP streams to avoid excessive server load
+rtmp_max_streams = 10
+```
+
+Above is a compact guide to using streaming. Adjust configuration and verify using `/hls/*` and `/stat` endpoints to
+confirm streaming availability and status.

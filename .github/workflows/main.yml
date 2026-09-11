@@ -1,130 +1,180 @@
-name: 'update schedule'
+name: Generate playlist manually
+
+# ⚠️注意：请不要在 fork 的仓库中添加 `on: schedule` 定时任务（cron）。
+# 生成结果只能发布到 `playlist-latest` Release 或外部端点，不得提交回 Git。
+# 如需要频繁更新或定时执行，请使用 Docker、命令行、GUI 或外部对象存储。
+#
+# ⚠️NOTICE: Do NOT add `on: schedule` cron triggers in forked repositories.
+# Publish generated results only to the `playlist-latest` release or an external endpoint; never commit them to Git.
+# Use Docker, the CLI, the GUI, or external object storage for frequent or scheduled runs.
 
 on:
-  schedule:
-    - cron: '0 22 * * *'
-    - cron: '0 10 * * *'
   workflow_dispatch:
-    branches:
-      - master
-      - dev
-      - gd
-      - gd-test
+
+permissions:
+  contents: write
+
+concurrency:
+  group: playlist-release-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
-  push:
-    runs-on: ${{ matrix.operating-system }}
-    timeout-minutes: 120
-    strategy:
-      matrix:
-        operating-system: ['ubuntu-20.04']
+  publish:
+    runs-on: ubuntu-latest
     steps:
-      - name: Set branch name
-        id: vars
-        run: echo "BRANCH_NAME=${{ github.repository_owner == 'Guovin' && 'gd' || 'master' }}" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - name: Checkout source and configuration
+        uses: actions/checkout@v6
         with:
-          ref: ${{ env.BRANCH_NAME }}
-      - name: Run with setup-python 3.8
-        uses: actions/setup-python@v4
+          fetch-depth: 1
+
+      - name: Load upstream configuration
+        if: github.repository_owner == 'Guovin'
+        run: |
+          git fetch --depth=1 origin gd
+          git archive FETCH_HEAD config | tar -x
+
+      - name: Record checked-out revision and state key
+        id: source
+        env:
+          CONFIG_HASH: ${{ hashFiles('config/**/*.ini', 'config/**/*.txt', 'config/**/*.m3u') }}
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "state_prefix=playlist-state-v1-${RUNNER_OS}-${CONFIG_HASH}-" >> "$GITHUB_OUTPUT"
+          echo "state_key=playlist-state-v1-${RUNNER_OS}-${CONFIG_HASH}-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/iptv-config-before"
+          cp -a config/. "$RUNNER_TEMP/iptv-config-before/"
+
+      - name: Remove generated files from the checkout
+        run: rm -rf -- output release-assets
+
+      - name: Restore result history
+        id: restore-state
+        uses: actions/cache/restore@v4
         with:
-          python-version: '3.8'
+          path: |
+            output/data/cache.gz
+            output/data/frozen.gz
+          key: ${{ steps.source.outputs.state_key }}
+          restore-keys: ${{ steps.source.outputs.state_prefix }}
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
           update-environment: true
-          cache: 'pipenv'
-      - name: Check open_driver config
-        id: check_driver
-        run: |
-          echo "OPEN_DRIVER=$(python -c '
-          try:
-            from utils.config import config
-            open_driver = config.getboolean("Settings", "open_driver")
-          except:
-            open_driver = False
-          print(open_driver)')" >> $GITHUB_ENV
-      - name: Check open_ffmpeg config
-        id: check_ffmpeg
-        run: |
-          echo "OPEN_FFMPEG=$(python -c '
-          try:
-            from utils.config import config
-            open_ffmpeg = config.getboolean("Settings", "open_ffmpeg")
-          except:
-            open_ffmpeg = False
-          print(open_ffmpeg)')" >> $GITHUB_ENV
-      - name: Install Selenium
-        if: env.OPEN_DRIVER == 'True' || env.OPEN_DRIVER == 'true'
-        run: |
-          sudo pip3 install selenium
-      - name: Set up Chrome
-        if: env.OPEN_DRIVER == 'True' || env.OPEN_DRIVER == 'true'
-        uses: browser-actions/setup-chrome@latest
-        with:
-          chrome-version: stable
-      - name: Download chrome driver
-        if: env.OPEN_DRIVER == 'True' || env.OPEN_DRIVER == 'true'
-        uses: nanasess/setup-chromedriver@master
-      - name: Launch chrome driver
-        if: env.OPEN_DRIVER == 'True' || env.OPEN_DRIVER == 'true'
-        run: |
-          export DISPLAY=:99
-          chromedriver --url-base=/wd/hub &
-          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 & # optional
+          cache: pipenv
+
       - name: Install FFmpeg
-        if: env.OPEN_FFMPEG == 'True' || env.OPEN_FFMPEG == 'true'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Install pipenv
-        run: pip3 install --user pipenv
-      - name: Install dependecies
-        run: pipenv --python 3.8 && pipenv install
-      - name: Build
-        run: pipenv run build
-      - name: Commit and push if changed
+
+      - name: Install dependencies
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git diff
-          final_file=$(python -c '
-          try: 
-            from utils.config import config
-            final_file = config.get("Settings", "final_file")
-          except: 
-            final_file = "output/result.txt"
-          print(final_file)')
-          final_m3u_file=$(python -c '
-          try: 
-            from utils.config import config
-            import os
-            final_file = config.get("Settings", "final_file")
-            final_m3u_file = os.path.splitext(final_file)[0] + ".m3u"
-          except: 
-            final_m3u_file = "output/result.m3u"
-          print(final_m3u_file)')
-          if [[ -f "$final_file" ]]; then
-            git add -f "$final_file"
+          python -m pip install --upgrade pip pipenv
+          pipenv --python 3.14
+          pipenv install --deploy
+
+      - name: Generate playlist results
+        env:
+          IPTV_API_ARTIFACT_BASE_URL: https://github.com/${{ github.repository }}/releases/download/playlist-latest
+        run: pipenv run dev
+
+      - name: Prepare public release assets
+        id: assets
+        run: |
+          final_file="$(pipenv run python -c 'from utils.config import config; print(config.final_file)')"
+          pipenv run python scripts/publish_results.py \
+            --final-file "$final_file" \
+            --destination release-assets
+          echo "final_file=$final_file" >> "$GITHUB_OUTPUT"
+
+      - name: Report non-persistent configuration changes
+        run: |
+          if ! diff -qr "$RUNNER_TEMP/iptv-config-before" config >/dev/null; then
+            echo "::warning::The update changed files under config/. These changes are not committed by the workflow."
+            {
+              echo "### Configuration notice"
+              echo
+              echo "The update changed files under \`config/\` (for example through automatic source disabling)."
+              echo "The workflow intentionally did not commit those changes. Use Docker, CLI, or the GUI when this state must persist."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          if [[ -f "result.txt" ]]; then
-            git add -f "result.txt"
+
+      - name: Publish rolling playlist release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: playlist-latest
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$SOURCE_SHA" \
+              --title "Latest generated playlist" \
+              --notes "Rolling, manually generated IPTV results. Assets are replaced by each successful run." \
+              --prerelease
           fi
-          if [[ -f "$final_m3u_file" ]]; then
-            git add -f "$final_m3u_file"
+
+          mapfile -d '' local_assets < <(find release-assets -maxdepth 1 -type f -print0 | sort -z)
+          gh release upload "$RELEASE_TAG" "${local_assets[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+
+          mapfile -t remote_assets < <(
+            gh release view "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --json assets \
+              --jq '.assets[].name'
+          )
+          for asset in "${remote_assets[@]}"; do
+            if [[ ! -f "release-assets/$asset" ]]; then
+              gh release delete-asset "$RELEASE_TAG" "$asset" \
+                --repo "$GITHUB_REPOSITORY" \
+                --yes
+            fi
+          done
+
+          find release-assets -maxdepth 1 -type f -printf '%f\n' | sort > /tmp/local-assets.txt
+          gh release view "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json assets \
+            --jq '.assets[].name' | sort > /tmp/remote-assets.txt
+          diff -u /tmp/local-assets.txt /tmp/remote-assets.txt
+
+      - name: Check that Git history was not changed
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Detect reusable result state
+        id: result-state
+        run: |
+          if [[ -f output/data/cache.gz || -f output/data/frozen.gz ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
           fi
-          if [[ -f "result.m3u" ]]; then
-            git add -f "result.m3u"
-          fi
-          if [[ -f "output/result_cache.pkl" ]]; then
-            git add -f "output/result_cache.pkl"
-          fi
-          if [[ -f "output/user_result.log" ]]; then
-            git add -f "output/user_result.log"
-          elif [[ -f "output/result.log" ]]; then
-            git add -f "output/result.log"
-          fi
-          if [[ -f "updates/fofa/fofa_hotel_region_result.pkl" ]]; then
-            git add -f "updates/fofa/fofa_hotel_region_result.pkl"
-          fi
-          if [[ -f "updates/fofa/fofa_multicast_region_result.pkl" ]]; then
-            git add -f "updates/fofa/fofa_multicast_region_result.pkl"
-          fi
-          if ! git diff --staged --quiet; then
-            git commit -m "Github Action Auto Updated"
-            git push --force
-          fi
+
+      - name: Save result history
+        if: steps.result-state.outputs.available == 'true' && steps.restore-state.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            output/data/cache.gz
+            output/data/frozen.gz
+          key: ${{ steps.source.outputs.state_key }}
+
+      - name: Add subscription links to summary
+        env:
+          RELEASE_BASE: https://github.com/${{ github.repository }}/releases/download/playlist-latest
+        run: |
+          {
+            echo "### Published playlist"
+            echo
+            if [[ -f release-assets/result.m3u ]]; then
+              echo "- M3U: $RELEASE_BASE/result.m3u"
+            fi
+            echo "- TXT: $RELEASE_BASE/result.txt"
+            if [[ -f release-assets/epg.gz ]]; then
+              echo "- EPG: $RELEASE_BASE/epg.gz"
+            fi
+            echo
+            echo "Generated from \`${{ steps.assets.outputs.final_file }}\` without creating a Git commit."
+          } >> "$GITHUB_STEP_SUMMARY"
